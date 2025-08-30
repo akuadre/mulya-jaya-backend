@@ -10,7 +10,20 @@ class ProductController extends Controller
     // GET /products
     public function index()
     {
-        return response()->json(Product::all(), 200);
+        $products = Product::all();
+
+        if ($products->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ada produk tersedia',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Daftar produk berhasil diambil',
+            'data' => $products,
+        ], 200);
     }
 
     // GET /products/{id}
@@ -20,36 +33,15 @@ class ProductController extends Controller
 
         if (!$product) {
             return response()->json([
+                'success' => false,
                 'message' => 'Produk tidak ditemukan',
+                'data' => null,
             ], 404);
         }
 
         return response()->json([
-            'id' => $product->id,
-            'name' => $product->name,
-            'type' => $product->type,
-            'price' => $product->price,
-            'stock' => $product->stock,
-            'description' => $product->description,
-            'image_url' => $product->image_url,
-        ], 200);
-    }
-
-    // POST /products
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'nama' => 'required|string|max:255',
-            'deskripsi' => 'nullable|string',
-            'rating' => 'nullable|integer|min:0|max:5',
-            'total_rating' => 'nullable|integer|min:0',
-            'harga' => 'required|integer|min:0',
-        ]);
-
-        $product = Product::create($validated);
-
-        return response()->json([
-            'message' => 'Product berhasil ditambahkan',
+            'success' => true,
+            'message' => 'Produk berhasil ditemukan',
             'data' => [
                 'id' => $product->id,
                 'name' => $product->name,
@@ -59,37 +51,93 @@ class ProductController extends Controller
                 'description' => $product->description,
                 'image_url' => $product->image_url,
             ],
+        ], 200);
+    }
+
+    // POST /products
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name'        => 'required|string|max:255',
+            'type'        => 'required|string|max:100',
+            'price'       => 'required|integer|min:0',
+            'stock'       => 'required|integer|min:0',
+            'description' => 'nullable|string',
+            'image_url'   => 'nullable|url',
+        ]);
+
+        Product::create([
+            'name' => $request->name,
+            'type' => $request->type,
+            'price' => $request->price,
+            'stock' => $request->stock,
+            'description' => $request->description,
+            'image_url' => $request->image_url,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Produk berhasil ditambahkan',
         ], 201);
     }
 
     // PUT /products/{id}
     public function update(Request $request, $id)
     {
-        $validated = $request->validate([
-            'nama' => 'sometimes|required|string|max:255',
-            'deskripsi' => 'nullable|string',
-            'rating' => 'nullable|integer|min:0|max:5',
-            'total_rating' => 'nullable|integer|min:0',
-            'harga' => 'sometimes|required|integer|min:0',
+        $request->validate([
+            'name'        => 'sometimes|required|string|max:255',
+            'type'        => 'sometimes|required|string|max:100',
+            'price'       => 'sometimes|required|integer|min:0',
+            'stock'       => 'sometimes|required|integer|min:0',
+            'description' => 'nullable|string',
+            'image_url'   => 'nullable|url',
         ]);
 
-        $product = Product::findOrFail($id);
-        $product->update($validated);
+        $product = Product::find($id);
+
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Produk tidak ditemukan',
+            ], 404);
+        }
+
+        // $product->update([
+        //     'name' => $request->name,
+        //     'type' => $request->type,
+        //     'price' => $request->price,
+        //     'stock' => $request->stock,
+        //     'description' => $request->description,
+        //     'image_url' => $request->image_url,
+        // ]);
+
+        $product->update($request->only([
+            'name', 'type', 'price', 'stock', 'description', 'image_url'
+        ]));
 
         return response()->json([
-            'message' => 'Product berhasil diupdate',
-            'data' => $product,
+            'success' => true,
+            'message' => 'Produk berhasil diperbarui',
         ], 200);
     }
 
     // DELETE /products/{id}
     public function destroy($id)
     {
-        $product = Product::findOrFail($id);
+        $product = Product::find($id);
+
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Produk tidak ditemukan',
+            ], 404);
+        }
+
         $product->delete();
 
         return response()->json([
-            'message' => 'Product berhasil dihapus',
+            'success' => true,
+            'message' => 'Produk berhasil dihapus',
         ], 200);
     }
 }

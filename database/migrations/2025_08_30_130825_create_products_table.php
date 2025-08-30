@@ -14,7 +14,15 @@ return new class extends Migration
         Schema::create('products', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('type');
+            $table->enum('type', [
+                'minus',        // kacamata minus (myopia)
+                'plus',         // kacamata plus (hypermetropia)
+                'silinder',     // astigmatisme
+                'bifokal',      // gabungan (biasanya plus + minus)
+                'progressive',  // lensa bertahap, modern
+                'photocromic',  // lensa yang berubah gelap kalau kena cahaya
+                'fashion'       // kacamata gaya / tanpa minus
+            ]);
             $table->unsignedBigInteger('price');
             $table->integer('stock');
             $table->text('description')->nullable();
