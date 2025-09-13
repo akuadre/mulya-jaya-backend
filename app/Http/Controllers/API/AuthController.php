@@ -7,8 +7,31 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 
+use App\Models\Admin;
+
 class AuthController extends Controller
 {
+    public function adminLogin(Request $request)
+    {
+        $credentials = $request->only('email', 'password');
+
+        // Cek user dengan role admin
+        $user = User::where('email', $credentials['email'])->where('is_admin', 1)->first();
+
+        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+            return response()->json(['message' => 'Invalid credentials'], 401);
+        }
+
+        // Buat token JWT / Sanctum
+        $token = $user->createToken('admin-token')->plainTextToken;
+
+        return response()->json([
+            'message' => 'Admin login successful',
+            'token' => $token,
+            'user' => $user
+        ]);
+    }
+
     // POST /api/register
     public function register(Request $request)
     {

@@ -21,10 +21,23 @@ class ProductController extends Controller
             ], 404);
         }
 
+        // mapping data biar 'type' jadi ucfirst
+        $data = $products->map(function ($product) {
+            return [
+                'id' => $product->id,
+                'name' => $product->name,
+                'type' => ucfirst($product->type),
+                'price' => $product->price,
+                'stock' => $product->stock,
+                'description' => $product->description,
+                'image_url' => $product->image_url,
+            ];
+        });
+
         return response()->json([
             'success' => true,
             'message' => 'Daftar produk berhasil diambil',
-            'data' => $products,
+            'data' => $data,
         ], 200);
     }
 
@@ -47,7 +60,7 @@ class ProductController extends Controller
             'data' => [
                 'id' => $product->id,
                 'name' => $product->name,
-                'type' => $product->type,
+                'type' => ucfirst($product->type),
                 'price' => $product->price,
                 'stock' => $product->stock,
                 'description' => $product->description,
