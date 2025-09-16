@@ -44,10 +44,10 @@ class OrderController extends Controller
 
         if ($userId) {
             // kalau ada user_id, tampilkan hanya pesanan user itu
-            $orders = Order::where('user_id', $userId)->with('product')->get();
+            $orders = Order::where('user_id', $userId)->with('product', 'user')->get();
         } else {
             // kalau admin, tampilkan semua pesanan
-            $orders = Order::with('product')->get();
+            $orders = Order::with('product', 'user')->get();
         }
 
         return response()->json([

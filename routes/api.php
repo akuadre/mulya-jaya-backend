@@ -6,6 +6,7 @@ use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\AdminAuthController;
 use App\Http\Controllers\API\OrderController;
 use App\Http\Controllers\API\ProductController;
+use App\Http\Controllers\API\UserController;
 
 // Route::get('/user', function (Request $request) {
 //     return $request->user();
@@ -47,10 +48,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/products/{id}', [ProductController::class, 'update']);
     Route::delete('/products/{id}', [ProductController::class, 'destroy']);
 
-    // Admin Orders
+    // Admin Get Users
+    Route::get('/users', [UserController::class, 'index']);
+
+    // Admin Get Orders
     Route::get('/orders', [OrderController::class, 'index']);
     Route::put('/orders/{id}/status', [OrderController::class, 'updateStatus']);
-    
+
     Route::post('/admin/logout', [AdminAuthController::class, 'logout']);
 });
 
