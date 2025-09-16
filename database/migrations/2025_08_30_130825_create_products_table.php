@@ -15,13 +15,9 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->enum('type', [
-                'minus',        // kacamata minus (myopia)
-                'plus',         // kacamata plus (hypermetropia)
-                'silinder',     // astigmatisme
-                'bifokal',      // gabungan (biasanya plus + minus)
-                'progressive',  // lensa bertahap, modern
-                'photocromic',  // lensa yang berubah gelap kalau kena cahaya
-                'fashion'       // kacamata gaya / tanpa minus
+                'pria',
+                'wanita',
+                'unisex'
             ]);
             $table->unsignedBigInteger('price');
             $table->integer('stock');
