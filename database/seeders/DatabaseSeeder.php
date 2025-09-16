@@ -32,6 +32,7 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('mulyajaya'),
         ]);
 
+        // User Seeder
         User::create([
             'name' => 'Adrenalin',
             'email' => 'adrenalin@gmail.com',
@@ -40,12 +41,65 @@ class DatabaseSeeder extends Seeder
             'address' => 'Jl. Maleber Barat',
         ]);
 
+        User::create([
+            'name' => 'Juang Syahid',
+            'email' => 'juang@gmail.com',
+            'password' => Hash::make('juang'),
+            'phone_number' => '081234567891',
+            'address' => 'Gg. Suniaraja',
+        ]);
+
+        User::create([
+            'name' => 'Evan',
+            'email' => 'evan@gmail.com',
+            'password' => Hash::make('evan'),
+            'phone_number' => '081234567891',
+            'address' => 'Perumahan Batujajar Regency',
+        ]);
+
+        // Order seeder
         Order::create([
             'user_id' => 1,
             'product_id' => 1,
             'address' => 'Jl. Maleber Barat',
             'order_date' => Carbon::now(),
             'total_price' => 200000,
+            'status' => 'completed',
+        ]);
+
+        Order::create([
+            'user_id' => 1,
+            'product_id' => 2,
+            'address' => 'Jl. Maleber Barat',
+            'order_date' => Carbon::now(),
+            'total_price' => 250000,
+            'status' => 'processing',
+        ]);
+
+        Order::create([
+            'user_id' => 1,
+            'product_id' => 3,
+            'address' => 'Jl. Maleber Barat',
+            'order_date' => Carbon::now(),
+            'total_price' => 400000,
+            'status' => 'processing',
+        ]);
+
+        Order::create([
+            'user_id' => 1,
+            'product_id' => 4,
+            'address' => 'Jl. Maleber Barat',
+            'order_date' => Carbon::now(),
+            'total_price' => 300000,
+            'status' => 'pending',
+        ]);
+
+        Order::create([
+            'user_id' => 1,
+            'product_id' => 5,
+            'address' => 'Jl. Maleber Barat',
+            'order_date' => Carbon::now(),
+            'total_price' => 350000,
             'status' => 'pending',
         ]);
     }

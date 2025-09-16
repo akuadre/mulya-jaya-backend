@@ -32,8 +32,6 @@ Route::get('/products/{id}', [ProductController::class, 'show']);
 // ---------------------------
 Route::post('/orders', [OrderController::class, 'store']);
 Route::get('/orders/{id}', [OrderController::class, 'show']);
-Route::get('/orders/recent', [OrderController::class, 'recent']);
-Route::get('/orders/stats', [OrderController::class, 'stats']);
 
 // ---------------------------
 // Admin Authentication
@@ -54,6 +52,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Admin Get Orders
     Route::get('/orders', [OrderController::class, 'index']);
     Route::put('/orders/{id}/status', [OrderController::class, 'updateStatus']);
+    
+    Route::get('/orders-recent', [OrderController::class, 'recent']);
+    Route::get('/orders-stats', [OrderController::class, 'stats']);
 
     Route::post('/admin/logout', [AdminAuthController::class, 'logout']);
 });
