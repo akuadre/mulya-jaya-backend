@@ -78,21 +78,29 @@ class ProductController extends Controller
             'price'       => 'required|integer|min:0',
             'stock'       => 'required|integer|min:0',
             'description' => 'nullable|string',
-            'image_url'   => 'nullable|url',
+            'photo'       => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
-        Product::create([
-            'name' => $request->name,
-            'type' => $request->type,
-            'price' => $request->price,
-            'stock' => $request->stock,
+        $imagePath = null;
+        if ($request->hasFile('photo')) {
+            // Simpan gambar ke folder public/images/products
+            $imagePath = $request->file('photo')->hashName();
+            $request->file('photo')->move(public_path('images/products'), $imagePath);
+        }
+
+        $product = Product::create([
+            'name'        => $request->name,
+            'type'        => $request->type,
+            'price'       => $request->price,
+            'stock'       => $request->stock,
             'description' => $request->description,
-            'image_url' => $request->image_url,
+            'image_url'   => $imagePath,
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Produk berhasil ditambahkan',
+            'message' => 'Produk berhasil ditambahkan.',
+            'data' => $product,
         ], 201);
     }
 
@@ -100,14 +108,15 @@ class ProductController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'name'        => 'sometimes|required|string|max:255',
-            'type'        => 'sometimes|required|string|max:100',
-            'price'       => 'sometimes|required|integer|min:0',
-            'stock'       => 'sometimes|required|integer|min:0',
+            'name'        => 'required|string|max:255',
+            'type'        => 'required|string|max:100',
+            'price'       => 'required|integer|min:0',
+            'stock'       => 'required|integer|min:0',
             'description' => 'nullable|string',
-            'image_url'   => 'nullable|url',
+            'photo'       => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
+        // $product = Product::findOrFail($id);
         $product = Product::find($id);
 
         if (!$product) {
@@ -116,24 +125,33 @@ class ProductController extends Controller
                 'message' => 'Produk tidak ditemukan',
             ], 404);
         }
+        $imagePath = $product->image_url;
 
-        // $product->update([
-        //     'name' => $request->name,
-        //     'type' => $request->type,
-        //     'price' => $request->price,
-        //     'stock' => $request->stock,
-        //     'description' => $request->description,
-        //     'image_url' => $request->image_url,
-        // ]);
+        if ($request->hasFile('photo')) {
+            // Hapus gambar lama jika ada
+            if ($product->image_url && file_exists(public_path('images/products/' . $product->image_url))) {
+                unlink(public_path('images/products/' . $product->image_url));
+            }
 
-        $product->update($request->only([
-            'name', 'type', 'price', 'stock', 'description', 'image_url'
-        ]));
+            // Simpan gambar baru
+            $imagePath = $request->file('photo')->hashName();
+            $request->file('photo')->move(public_path('images/products'), $imagePath);
+        }
+
+        $product->update([
+            'name'        => $request->name,
+            'type'        => $request->type,
+            'price'       => $request->price,
+            'stock'       => $request->stock,
+            'description' => $request->description,
+            'image_url'   => $imagePath,
+        ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Produk berhasil diperbarui',
-        ], 200);
+            'message' => 'Produk berhasil diperbarui.',
+            'data' => $product,
+        ]);
     }
 
     // DELETE /products/{id}
@@ -148,11 +166,15 @@ class ProductController extends Controller
             ], 404);
         }
 
+        if ($product->image_url && file_exists(public_path('images/products/' . $product->image_url))) {
+            unlink(public_path('images/products/' . $product->image_url));
+        }
+
         $product->delete();
 
         return response()->json([
             'success' => true,
-            'message' => 'Produk berhasil dihapus',
-        ], 200);
+            'message' => 'Produk berhasil dihapus.'
+        ]);
     }
 }
