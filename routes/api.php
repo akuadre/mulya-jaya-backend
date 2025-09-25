@@ -46,6 +46,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/products/{id}', [ProductController::class, 'update']);
     Route::delete('/products/{id}', [ProductController::class, 'destroy']);
 
+     // Penjualan Bulanan (Total Harga Transaksi Selesai per Bulan)
+    Route::get('orders-sales-monthly', [OrderController::class, 'salesMonthly']);
+    
+    // Jumlah Order Tahunan (Total Count Order per Tahun)
+    Route::get('orders-count-annual', [OrderController::class, 'countAnnual']);
+
+    // [PENAMBAHAN] Penjualan Harian (Total Harga Transaksi Selesai per Hari)
+    Route::get('orders-sales-daily', [OrderController::class, 'salesDaily']);
+   
+    // routes/api.php (Contoh)
+    Route::get('orders-sales-annual', [OrderController::class, 'salesAnnual']);
+    
+
     // Admin Get Users
     Route::get('/users', [UserController::class, 'index']);
 
