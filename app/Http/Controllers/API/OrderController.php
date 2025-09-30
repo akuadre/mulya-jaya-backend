@@ -165,11 +165,11 @@ class OrderController extends Controller
     }
 
     // GET /orders/sales-annual → Total Penjualan per Tahun (menggantikan countAnnual)
-    public function salesAnnual() 
+    public function salesAnnual()
     {
         // Tetapkan tahun mulai ke 2024
         $startYear = 2024;
-        
+
         $annualSales = Order::select(
                 DB::raw('YEAR(order_date) as year'),
                 // Mengambil total harga (Rupiah)
@@ -177,13 +177,13 @@ class OrderController extends Controller
             )
             ->where('status', 'completed')
             // Filter hanya data dari tahun 2024 dan seterusnya
-            ->whereYear('order_date', '>=', $startYear) 
+            ->whereYear('order_date', '>=', $startYear)
             ->groupBy('year')
             ->orderBy('year')
             ->get();
 
         $labels = $annualSales->pluck('year')->map(fn($y) => (string) $y)->toArray();
-        
+
         // Memastikan total penjualan sebagai integer (bilangan bulat)
         $data   = $annualSales->pluck('total_sales')->map(fn($s) => (int) $s)->toArray();
 
@@ -236,4 +236,55 @@ class OrderController extends Controller
             'data'    => array_values($dailySales),
         ]);
     }
+
+    // --- METHOD BARU UNTUK DASHBOARD SUMMARY ---
+    public function getDashboardSummary()
+    {
+        // Menghitung total pendapatan dari order yang statusnya 'completed'
+        $totalRevenue = Order::where('status', 'completed')->sum('total_price');
+
+        $stats = [
+            'totalRevenue' => (int) $totalRevenue, // Tambahkan totalRevenue di sini
+            'pending'      => Order::where('status', 'pending')->count(),
+            'processing'   => Order::where('status', 'processing')->count(),
+            'completed'    => Order::where('status', 'completed')->count(),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Dashboard summary stats',
+            'data'    => $stats,
+        ], 200);
+    }
+
+    // --- METHOD BARU UNTUK DASHBOARD SALES ---
+    public function getDashboardSales()
+    {
+        // Kita panggil saja method yang sudah ada untuk merangkum data
+        $dailyResponse = $this->salesDaily()->getData(true);
+        $monthlyResponse = $this->salesMonthly()->getData(true);
+        $annualResponse = $this->salesAnnual()->getData(true);
+
+        $salesData = [
+            'daily'   => [
+                'labels' => $dailyResponse['labels'],
+                'data'   => $dailyResponse['data'],
+            ],
+            'monthly' => [
+                'labels' => $monthlyResponse['labels'],
+                'data'   => $monthlyResponse['data'],
+            ],
+            'annual'  => [
+                'labels' => $annualResponse['labels'],
+                'data'   => $annualResponse['data'],
+            ],
+        ];
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Dashboard sales data',
+            'data'    => $salesData,
+        ], 200);
+    }
+
 }
