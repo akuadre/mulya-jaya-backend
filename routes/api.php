@@ -7,6 +7,7 @@ use App\Http\Controllers\API\AdminAuthController;
 use App\Http\Controllers\API\OrderController;
 use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\UserController;
+use App\Http\Controllers\API\ReportController;
 
 // Route::get('/user', function (Request $request) {
 //     return $request->user();
@@ -58,6 +59,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // [PENAMBAHAN] Penjualan Harian (Total Harga Transaksi Selesai per Hari)
     Route::get('orders-sales-daily', [OrderController::class, 'salesDaily']);
+    // --- ROUTE BARU UNTUK HALAMAN LAPORAN ---
+    Route::get('/reports', [ReportController::class, 'generateReport']);
 
     // routes/api.php (Contoh)
     Route::get('orders-sales-annual', [OrderController::class, 'salesAnnual']);
