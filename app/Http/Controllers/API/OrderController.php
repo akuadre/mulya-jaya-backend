@@ -138,11 +138,13 @@ class OrderController extends Controller
         $currentYear = Carbon::now()->year;
 
         $salesData = Order::select(
-                DB::raw('MONTH(order_date) as month'),
+            // DB::raw('MONTH(order_date) as month'),
+                DB::raw('MONTH(updated_at) as month'),
                 DB::raw('SUM(total_price) as total_sales')
             )
             ->where('status', 'completed')
-            ->whereYear('order_date', $currentYear)
+            // ->whereYear('order_date', $currentYear)
+            ->whereYear('updated_at', $currentYear)
             ->groupBy('month')
             ->orderBy('month')
             ->pluck('total_sales', 'month')
@@ -171,13 +173,16 @@ class OrderController extends Controller
         $startYear = 2024;
 
         $annualSales = Order::select(
-                DB::raw('YEAR(order_date) as year'),
+                // DB::raw('YEAR(order_date) as year'),
+                DB::raw('YEAR(updated_at) as year'),
+
                 // Mengambil total harga (Rupiah)
                 DB::raw('SUM(total_price) as total_sales')
             )
             ->where('status', 'completed')
             // Filter hanya data dari tahun 2024 dan seterusnya
-            ->whereYear('order_date', '>=', $startYear)
+            // ->whereYear('order_date', '>=', $startYear)
+            ->whereYear('updated_at', '>=', $startYear)
             ->groupBy('year')
             ->orderBy('year')
             ->get();
@@ -210,11 +215,13 @@ class OrderController extends Controller
 
         // Ambil data penjualan dari DB
         $salesData = Order::select(
-                DB::raw('DATE(order_date) as date'),
+                // DB::raw('DATE(order_date) as date'),
+                DB::raw('DATE(updated_at) as date'),
                 DB::raw('SUM(total_price) as total_sales')
             )
             ->where('status', 'completed')
-            ->whereBetween('order_date', [$startDate->copy()->startOfDay(), $endDate->copy()->endOfDay()])
+            // ->whereBetween('order_date', [$startDate->copy()->startOfDay(), $endDate->copy()->endOfDay()])
+            ->whereBetween('updated_at', [$startDate->copy()->startOfDay(), $endDate->copy()->endOfDay()])
             ->groupBy('date')
             ->orderBy('date')
             ->pluck('total_sales', 'date')
