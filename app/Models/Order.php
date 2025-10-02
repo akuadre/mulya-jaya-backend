@@ -19,4 +19,9 @@ class Order extends Model
     {
         return $this->belongsTo(Product::class);
     }
+
+    public function lense()
+    {
+        return $this->hasOne(Lense::class);
+    }
 }

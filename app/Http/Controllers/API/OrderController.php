@@ -3,40 +3,93 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\Lense;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Validator;
 
 class OrderController extends Controller
 {
     // POST /orders → bikin order baru
     public function store(Request $request)
     {
-        $request->validate([
-            'user_id'    => 'required|exists:users,id',
-            'product_id' => 'required|exists:products,id',
-            'total_price'=> 'required|numeric|min:0',
+        // --- 1. VALIDASI DATA GABUNGAN (ORDER + LENSE) ---
+        $validator = Validator::make($request->all(), [
+            // Validasi untuk Order
+            'user_id'     => 'required|exists:users,id',
+            'product_id'  => 'required|exists:products,id',
+            'total_price' => 'required|numeric|min:0',
+
+            // Validasi untuk Lense (datanya dikirim dalam objek 'lense_data')
+            'lense_data'                => 'sometimes|array', // 'lense_data' boleh ada atau tidak
+            'lense_data.lense_type'     => 'required_with:lense_data|string',
+            'lense_data.is_custom'      => 'required_with:lense_data|boolean',
+
+            // Validasi kondisional: jika is_custom = true, maka field resep wajib diisi
+            'lense_data.left_sph'       => 'required_if:lense_data.is_custom,true|nullable|numeric',
+            'lense_data.left_cyl'       => 'required_if:lense_data.is_custom,true|nullable|numeric',
+            'lense_data.left_axis'      => 'required_if:lense_data.is_custom,true|nullable|numeric',
+            'lense_data.right_sph'      => 'required_if:lense_data.is_custom,true|nullable|numeric',
+            'lense_data.right_cyl'      => 'required_if:lense_data.is_custom,true|nullable|numeric',
+            'lense_data.right_axis'     => 'required_if:lense_data.is_custom,true|nullable|numeric',
+            'lense_data.pd'             => 'required_if:lense_data.is_custom,true|nullable|numeric',
         ]);
 
-        $user    = User::findOrFail($request->user_id);
-        $product = Product::findOrFail($request->product_id);
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
 
-        $order = Order::create([
-            'user_id'     => $user->id,
-            'product_id'  => $product->id,
-            'address'     => $user->address ?? '-',
-            'order_date'  => now(),
-            'total_price' => $request->total_price,
-            'status'      => 'pending',
-        ]);
+        $validatedData = $validator->validated();
+        $order = null;
 
+        // --- 2. GUNAKAN DATABASE TRANSACTION ---
+        // Ini untuk memastikan data Order dan Lense sama-sama berhasil dibuat, atau keduanya gagal.
+        try {
+            DB::beginTransaction();
+
+            // Ambil data user untuk alamat
+            $user = User::findOrFail($validatedData['user_id']);
+
+            // Buat Order terlebih dahulu
+            $order = Order::create([
+                'user_id'     => $validatedData['user_id'],
+                'product_id'  => $validatedData['product_id'],
+                'address'     => $user->address ?? 'Alamat tidak diatur',
+                'order_date'  => now(),
+                'total_price' => $validatedData['total_price'],
+                'status'      => 'pending',
+            ]);
+
+            // Cek jika ada data lensa yang dikirim
+            if (isset($validatedData['lense_data'])) {
+                // Tambahkan order_id ke data lensa
+                $lenseData = $validatedData['lense_data'];
+                $lenseData['order_id'] = $order->id;
+
+                // Buat data Lense
+                Lense::create($lenseData);
+            }
+
+            DB::commit(); // Jika semua berhasil, simpan perubahan ke database
+        } catch (\Exception $e) {
+            DB::rollBack(); // Jika ada error, batalkan semua query
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal membuat pesanan.',
+                'error'   => $e->getMessage()
+            ], 500);
+        }
+
+        // --- 3. KEMBALIKAN RESPONSE DENGAN DATA LENGKAP ---
         return response()->json([
             'success' => true,
             'message' => 'Order berhasil dibuat',
-            'data'    => $order->load('user', 'product'),
+            // Load relasi user, product, dan lense yang baru
+            'data'    => $order->load('user', 'product', 'lense'),
         ], 201);
     }
 
