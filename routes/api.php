@@ -40,9 +40,11 @@ Route::get('/orders/{id}', [OrderController::class, 'show']);
 Route::post('/admin/login', [AdminAuthController::class, 'login']);
 
 // ---------------------------
-// Admin Products Management
+// Admin Routes (Protected)
 // ---------------------------
 Route::middleware('auth:sanctum')->group(function () {
+
+    // Admin Products Management
     Route::post('/products', [ProductController::class, 'store']);
     Route::put('/products/{id}', [ProductController::class, 'update']);
     Route::delete('/products/{id}', [ProductController::class, 'destroy']);
@@ -51,20 +53,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard-summary', [OrderController::class, 'getDashboardSummary']);
     Route::get('/dashboard-sales', [OrderController::class, 'getDashboardSales']);
 
-     // Penjualan Bulanan (Total Harga Transaksi Selesai per Bulan)
-    Route::get('orders-sales-monthly', [OrderController::class, 'salesMonthly']);
+    // Penjualan Bulanan (Total Harga Transaksi Selesai per Bulan)
+    Route::get('/orders-sales-monthly', [OrderController::class, 'salesMonthly']);
 
     // Jumlah Order Tahunan (Total Count Order per Tahun)
-    Route::get('orders-count-annual', [OrderController::class, 'countAnnual']);
+    Route::get('/orders-count-annual', [OrderController::class, 'countAnnual']);
 
     // [PENAMBAHAN] Penjualan Harian (Total Harga Transaksi Selesai per Hari)
-    Route::get('orders-sales-daily', [OrderController::class, 'salesDaily']);
+    Route::get('/orders-sales-daily', [OrderController::class, 'salesDaily']);
+
     // --- ROUTE BARU UNTUK HALAMAN LAPORAN ---
     Route::get('/reports', [ReportController::class, 'generateReport']);
 
     // routes/api.php (Contoh)
-    Route::get('orders-sales-annual', [OrderController::class, 'salesAnnual']);
-
+    Route::get('/orders-sales-annual', [OrderController::class, 'salesAnnual']);
 
     // Admin Get Users
     Route::get('/users', [UserController::class, 'index']);
@@ -76,6 +78,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/orders-recent', [OrderController::class, 'recent']);
     Route::get('/orders-stats', [OrderController::class, 'stats']);
 
+    // Admin Logout
     Route::post('/admin/logout', [AdminAuthController::class, 'logout']);
 });
 
@@ -96,5 +99,3 @@ Route::middleware('auth:sanctum')->group(function () {
 // ---------------------------
 // Route::post('/payment/confirm', [OrderController::class, 'confirmPayment']);
 // Route::get('/lenses', [ProductController::class, 'lenses']); // custom lenses
-
-
