@@ -132,7 +132,7 @@ class OrderController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:pending,processing,completed,cancelled'
+            'status' => 'required|in:pending,processing,sending,completed,cancelled'
         ]);
 
         $order = Order::find($id);
@@ -174,6 +174,7 @@ class OrderController extends Controller
         $stats = [
             'pending'    => Order::where('status', 'pending')->count(),
             'processing' => Order::where('status', 'processing')->count(),
+            'sending'    => Order::where('status', 'sending')->count(),
             'completed'  => Order::where('status', 'completed')->count(),
             'cancelled'  => Order::where('status', 'cancelled')->count(),
         ];
@@ -307,7 +308,9 @@ class OrderController extends Controller
             'totalRevenue' => (int) $totalRevenue, // Tambahkan totalRevenue di sini
             'pending'      => Order::where('status', 'pending')->count(),
             'processing'   => Order::where('status', 'processing')->count(),
+            'sending'      => Order::where('status', 'sending')->count(),
             'completed'    => Order::where('status', 'completed')->count(),
+            'cancelled'    => Order::where('status', 'cancelled')->count(),
         ];
 
         return response()->json([
