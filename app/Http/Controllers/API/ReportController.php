@@ -20,10 +20,15 @@ class ReportController extends Controller
         $completedOrders = Order::where('status', 'completed');
 
         $summary = [
-            'totalRevenueAllTime'   => (int) $completedOrders->sum('total_price'),
-            'totalRevenueCurrentYear' => (int) Order::where('status', 'completed')->whereYear('order_date', now()->year)->sum('total_price'),
-            'totalOrdersCurrentMonth' => Order::whereMonth('order_date', now()->month)->whereYear('order_date', now()->year)->count(),
-            'averageOrderValue'     => (int) $completedOrders->avg('total_price'),
+            'totalRevenueAllTime'     => (int) $completedOrders->sum('total_price'),
+            'totalRevenueCurrentMonth'=> (int) Order::where('status', 'completed')
+                                            ->whereMonth('order_date', now()->month)
+                                            ->whereYear('order_date', now()->year)
+                                            ->sum('total_price'),
+            'totalOrdersCurrentYear'  => Order::whereYear('order_date', now()->year)->count(),
+            'totalOrdersCurrentMonth' => Order::whereMonth('order_date', now()->month)
+                                            ->whereYear('order_date', now()->year)
+                                            ->count(),
         ];
 
         // === 2. PRODUK TERLARIS (TOP 5) ===
