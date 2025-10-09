@@ -64,6 +64,21 @@ class OrderController extends Controller
                 'status'      => 'pending',
             ]);
 
+            // Ambil produk
+            $product = Product::findOrFail($validatedData['product_id']);
+
+            // Pastikan quantity ada (kalau kamu kirim dari frontend)
+            $quantity = $request->input('quantity', 1); // default 1
+
+            // Cek stok cukup
+            if ($product->stock < $quantity) {
+                throw new \Exception('Stok produk tidak mencukupi');
+            }
+
+            // Kurangi stok
+            $product->stock -= $quantity;
+            $product->save();
+
             // Cek jika ada data lensa yang dikirim
             if (isset($validatedData['lense_data'])) {
                 // Tambahkan order_id ke data lensa
