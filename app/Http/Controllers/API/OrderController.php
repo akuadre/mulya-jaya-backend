@@ -79,16 +79,6 @@ class OrderController extends Controller
             $product->stock -= $quantity;
             $product->save();
 
-            // Cek jika ada data lensa yang dikirim
-            if (isset($validatedData['lense_data'])) {
-                // Tambahkan order_id ke data lensa
-                $lenseData = $validatedData['lense_data'];
-                $lenseData['order_id'] = $order->id;
-
-                // Buat data Lense
-                Lense::create($lenseData);
-            }
-
             DB::commit(); // Jika semua berhasil, simpan perubahan ke database
         } catch (\Exception $e) {
             DB::rollBack(); // Jika ada error, batalkan semua query
