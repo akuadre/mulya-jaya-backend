@@ -17,28 +17,18 @@ class OrderController extends Controller
     // POST /orders → bikin order baru
     public function store(Request $request)
     {
-        // --- 1. VALIDASI DATA GABUNGAN (ORDER + LENSE) ---
+        // --- 1. VALIDASI DATA (Order + Foto) ---
         $validator = Validator::make($request->all(), [
-            // Validasi untuk Order
-            'user_id'     => 'required|exists:users,id',
-            'product_id'  => 'required|exists:products,id',
-            'total_price' => 'required|numeric|min:0',
+            'user_id'     => 'required|exists:users,id',          // user harus ada di tabel users
+            'product_id'  => 'required|exists:products,id',       // produk harus ada di tabel products
+            'total_price' => 'required|numeric|min:0',            // harga wajib numeric
 
-            // Validasi untuk Lense (datanya dikirim dalam objek 'lense_data')
-            'lense_data'                => 'sometimes|array', // 'lense_data' boleh ada atau tidak
-            'lense_data.lense_type'     => 'required_with:lense_data|string',
-            'lense_data.is_custom'      => 'required_with:lense_data|boolean',
-
-            // Validasi kondisional: jika is_custom = true, maka field resep wajib diisi
-            'lense_data.left_sph'       => 'required_if:lense_data.is_custom,true|nullable|numeric',
-            'lense_data.left_cyl'       => 'required_if:lense_data.is_custom,true|nullable|numeric',
-            'lense_data.left_axis'      => 'required_if:lense_data.is_custom,true|nullable|numeric',
-            'lense_data.right_sph'      => 'required_if:lense_data.is_custom,true|nullable|numeric',
-            'lense_data.right_cyl'      => 'required_if:lense_data.is_custom,true|nullable|numeric',
-            'lense_data.right_axis'     => 'required_if:lense_data.is_custom,true|nullable|numeric',
-            'lense_data.pd'             => 'required_if:lense_data.is_custom,true|nullable|numeric',
+            // Foto dikirim dari Android via Multipart (Optional)
+            // Jika ingin wajib, ubah nullable -> required
+            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
+        // Jika validasi gagal → langsung balikan error
         if ($validator->fails()) {
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
@@ -46,42 +36,46 @@ class OrderController extends Controller
         $validatedData = $validator->validated();
         $order = null;
 
-        // --- 2. GUNAKAN DATABASE TRANSACTION ---
-        // Ini untuk memastikan data Order dan Lense sama-sama berhasil dibuat, atau keduanya gagal.
+        // --- 2. TRANSAKSI DATABASE ---
+        // Jika ada error di tengah proses, semua batal (rollback)
         try {
             DB::beginTransaction();
 
-            // Ambil data user untuk alamat
+            // Ambil data user untuk auto-fill alamat
             $user = User::findOrFail($validatedData['user_id']);
 
-            // Buat Order terlebih dahulu
+            // --- 3. SIMPAN FOTO (Jika ada dikirim dari Android) ---
+            $photoPath = null;
+            if ($request->hasFile('photo')) {
+                // Simpan file ke storage/app/public/orders/xxxx.jpg
+                $photoPath = $request->file('photo')->store('public/images/doctorRecipe');
+            }
+
+            // --- 4. CREATE ORDER ---
             $order = Order::create([
                 'user_id'     => $validatedData['user_id'],
                 'product_id'  => $validatedData['product_id'],
-                'address'     => $user->address ?? 'Alamat tidak diatur',
+                'address'     => $user->address ?? 'Alamat tidak diatur', // fallback kalau user nggak punya alamat
                 'order_date'  => now(),
                 'total_price' => $validatedData['total_price'],
                 'status'      => 'pending',
+                'photo'       => $photoPath, // SIMPAN path foto ke database
             ]);
 
-            // Ambil produk
+            // --- 5. AMBIL & KURANGI STOK PRODUK ---
             $product = Product::findOrFail($validatedData['product_id']);
+            $quantity = $request->input('quantity', 1); // default qty = 1
 
-            // Pastikan quantity ada (kalau kamu kirim dari frontend)
-            $quantity = $request->input('quantity', 1); // default 1
-
-            // Cek stok cukup
             if ($product->stock < $quantity) {
                 throw new \Exception('Stok produk tidak mencukupi');
             }
 
-            // Kurangi stok
             $product->stock -= $quantity;
             $product->save();
 
-            DB::commit(); // Jika semua berhasil, simpan perubahan ke database
+            DB::commit(); // aman → simpan database
         } catch (\Exception $e) {
-            DB::rollBack(); // Jika ada error, batalkan semua query
+            DB::rollBack(); // error → rollback semua data
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal membuat pesanan.',
@@ -89,14 +83,15 @@ class OrderController extends Controller
             ], 500);
         }
 
-        // --- 3. KEMBALIKAN RESPONSE DENGAN DATA LENGKAP ---
+        // --- 6. BALIKKAN RESPONSE KE ANDROID ---
         return response()->json([
             'success' => true,
             'message' => 'Order berhasil dibuat',
-            // Load relasi user, product, dan lense yang baru
             'data'    => $order->load('user', 'product', 'lense'),
+            'photo_url' => $photoPath ? asset('storage/'.$photoPath) : null, // Android bisa akses langsung via URL ini
         ], 201);
     }
+
 
     // GET /orders → list semua order
     public function index(Request $request)
