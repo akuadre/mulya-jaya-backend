@@ -75,7 +75,7 @@ class DatabaseSeeder extends Seeder
             'order_date' => Carbon::now(),
             'total_price' => 250000,
             'status' => 'processing',
-            'payment_method' => 'gopay',
+            'payment_method' => 'bca',
         ]);
 
         Order::create([
@@ -85,7 +85,7 @@ class DatabaseSeeder extends Seeder
             'order_date' => Carbon::now(),
             'total_price' => 400000,
             'status' => 'processing',
-            'payment_method' => 'dana',
+            'payment_method' => 'mandiri',
         ]);
 
         Order::create([
@@ -105,7 +105,7 @@ class DatabaseSeeder extends Seeder
             'order_date' => Carbon::now(),
             'total_price' => 350000,
             'status' => 'pending',
-            'payment_method' => 'cod',
+            'payment_method' => 'mandiri',
         ]);
     }
 }

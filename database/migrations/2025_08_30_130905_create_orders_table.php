@@ -21,10 +21,9 @@ return new class extends Migration
             $table->enum('status', ['pending', 'processing', 'sending', 'completed', 'cancelled'])->default('pending');
             $table->string('photo')->nullable();
             $table->enum('payment_method', [
-                'bca', 'bri', 'bni', 'mandiri',
-                'gopay', 'ovo', 'dana', 'shopeepay',
-                'qris', 'cod'
-            ])->default('cod');
+                'bca', 'mandiri',
+                // 'gopay', 'ovo', 'dana', 'shopeepay', 'qris',
+            ]);
             $table->timestamps();
         });
     }
