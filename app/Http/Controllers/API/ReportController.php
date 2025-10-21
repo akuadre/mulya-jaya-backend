@@ -29,6 +29,7 @@ class ReportController extends Controller
             'totalOrdersCurrentMonth' => Order::whereMonth('order_date', now()->month)
                                             ->whereYear('order_date', now()->year)
                                             ->count(),
+             'totalStockQuantity' => (int) \App\Models\Product::sum('stock'), // Menggunakan Model Product
         ];
 
         // === 2. PRODUK TERLARIS (TOP 5) ===
