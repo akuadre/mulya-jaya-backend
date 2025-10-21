@@ -2,12 +2,16 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\AdminAuthController;
 use App\Http\Controllers\API\OrderController;
 use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\ReportController;
+use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\DatabaseBackupController;
 
 // Route::get('/user', function (Request $request) {
 //     return $request->user();
@@ -80,6 +84,83 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Admin Logout
     Route::post('/admin/logout', [AdminAuthController::class, 'logout']);
+
+    Route::get('/audit-logs', [AuditLogController::class, 'index']);
+    Route::get('/audit-logs/statistics', [AuditLogController::class, 'statistics']);
+    Route::get('/audit-logs/export', [AuditLogController::class, 'export']);
+    Route::get('/audit-logs/{id}', [AuditLogController::class, 'show']);
+
+
+    // ✅ ROUTE BACKUP UNTUK FRONTEND (YANG BARU DITAMBAHKAN)
+    Route::post('/backup-database', function (Request $request) {
+        try {
+            // Dapatkan kredensial database dari config
+            $dbName = config('database.connections.mysql.database');
+            $dbUser = config('database.connections.mysql.username');
+            $dbPass = config('database.connections.mysql.password');
+            $dbHost = config('database.connections.mysql.host');
+            
+            // Generate nama file - SESUAIKAN dengan frontend
+            $filename = 'mulyajaya_backup_' . date('Y-m-d_H-i-s') . '.sql';
+            
+            $sqlContent = "-- Database Backup for Mulya Jaya\n";
+            $sqlContent .= "-- Generated: " . date('Y-m-d H:i:s') . "\n\n";
+            
+            // List semua tabel yang ada di database Anda
+            $tables = ['users', 'admins', 'products', 'orders', 'lenses', 'migrations', 'personal_access_tokens'];
+            
+            foreach ($tables as $table) {
+                // Skip jika tabel tidak ada
+                if (!Schema::hasTable($table)) {
+                    continue;
+                }
+                
+                // Dapatkan struktur tabel
+                $createTable = DB::select("SHOW CREATE TABLE `{$table}`")[0];
+                $sqlContent .= "--\n-- Table structure for table `{$table}`\n--\n";
+                $sqlContent .= "DROP TABLE IF EXISTS `{$table}`;\n";
+                $sqlContent .= $createTable->{'Create Table'} . ";\n\n";
+                
+                // Dapatkan data tabel
+                $data = DB::table($table)->get();
+                
+                if ($data->count() > 0) {
+                    $sqlContent .= "--\n-- Dumping data for table `{$table}`\n--\n";
+                    
+                    foreach ($data as $row) {
+                        $columns = [];
+                        $values = [];
+                        
+                        foreach ((array)$row as $column => $value) {
+                            $columns[] = "`{$column}`";
+                            if ($value === null) {
+                                $values[] = 'NULL';
+                            } else {
+                                $values[] = "'" . addslashes($value) . "'";
+                            }
+                        }
+                        
+                        $sqlContent .= "INSERT INTO `{$table}` (" . implode(', ', $columns) . ") VALUES (" . implode(', ', $values) . ");\n";
+                    }
+                    $sqlContent .= "\n";
+                }
+            }
+            
+            // Return sebagai file download
+            return response($sqlContent)
+                ->header('Content-Type', 'application/sql')
+                ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
+                ->header('Pragma', 'no-cache')
+                ->header('Expires', '0');
+                
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Backup failed: ' . $e->getMessage()
+            ], 500);
+        }
+    });
+    
 });
 
 // ---------------------------

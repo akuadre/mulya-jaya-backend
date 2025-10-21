@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
+use App\Services\AuditLogService;
 
 class OrderController extends Controller
 {
@@ -73,6 +74,9 @@ class OrderController extends Controller
             $product->stock -= $quantity;
             $product->save();
 
+            // ✅ LOG AUDIT - Order dibuat
+            AuditLogService::logOrderAction('create', $order->id, "#ORD-{$order->id}");
+
             DB::commit(); // aman → simpan database
         } catch (\Exception $e) {
             DB::rollBack(); // error → rollback semua data
@@ -91,7 +95,6 @@ class OrderController extends Controller
             'photo_url' => $photoPath ? asset('storage/'.$photoPath) : null, // Android bisa akses langsung via URL ini
         ], 201);
     }
-
 
     // GET /orders → list semua order
     public function index(Request $request)
@@ -143,8 +146,19 @@ class OrderController extends Controller
             ], 404);
         }
 
+        $oldStatus = $order->status;
         $order->status = $request->status;
         $order->save();
+
+        // ✅ LOG AUDIT - Status order diupdate
+        AuditLogService::log(
+            'update',
+            'orders',
+            "Mengubah status pesanan #ORD-{$order->id} dari {$oldStatus} menjadi {$order->status}",
+            null, null, $order->id,
+            ['status' => $oldStatus],
+            ['status' => $order->status]
+        );
 
         return response()->json([
             'success' => true,
@@ -192,12 +206,10 @@ class OrderController extends Controller
         $currentYear = Carbon::now()->year;
 
         $salesData = Order::select(
-            // DB::raw('MONTH(order_date) as month'),
                 DB::raw('MONTH(updated_at) as month'),
                 DB::raw('SUM(total_price) as total_sales')
             )
             ->where('status', 'completed')
-            // ->whereYear('order_date', $currentYear)
             ->whereYear('updated_at', $currentYear)
             ->groupBy('month')
             ->orderBy('month')
@@ -227,15 +239,10 @@ class OrderController extends Controller
         $startYear = 2024;
 
         $annualSales = Order::select(
-                // DB::raw('YEAR(order_date) as year'),
                 DB::raw('YEAR(updated_at) as year'),
-
-                // Mengambil total harga (Rupiah)
                 DB::raw('SUM(total_price) as total_sales')
             )
             ->where('status', 'completed')
-            // Filter hanya data dari tahun 2024 dan seterusnya
-            // ->whereYear('order_date', '>=', $startYear)
             ->whereYear('updated_at', '>=', $startYear)
             ->groupBy('year')
             ->orderBy('year')
@@ -269,12 +276,10 @@ class OrderController extends Controller
 
         // Ambil data penjualan dari DB
         $salesData = Order::select(
-                // DB::raw('DATE(order_date) as date'),
                 DB::raw('DATE(updated_at) as date'),
                 DB::raw('SUM(total_price) as total_sales')
             )
             ->where('status', 'completed')
-            // ->whereBetween('order_date', [$startDate->copy()->startOfDay(), $endDate->copy()->endOfDay()])
             ->whereBetween('updated_at', [$startDate->copy()->startOfDay(), $endDate->copy()->endOfDay()])
             ->groupBy('date')
             ->orderBy('date')
@@ -350,4 +355,31 @@ class OrderController extends Controller
         ], 200);
     }
 
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy($id)
+    {
+        try {
+            $order = Order::findOrFail($id);
+            $orderNumber = "#ORD-{$order->id}";
+            $orderId = $order->id;
+
+            $order->delete();
+
+            // ✅ LOG AUDIT - Order dihapus
+            AuditLogService::logOrderAction('delete', $orderId, $orderNumber);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pesanan berhasil dihapus'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus pesanan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
