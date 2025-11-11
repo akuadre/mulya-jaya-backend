@@ -12,7 +12,7 @@ class ProductController extends Controller
     // GET /products
     public function index()
     {
-        $products = Product::all();
+        $products = Product::where('stock', '>', 0)->get();
 
         if ($products->isEmpty()) {
             return response()->json([
@@ -164,8 +164,8 @@ class ProductController extends Controller
 
             // ✅ LOG AUDIT - Produk diupdate
             AuditLogService::logProductAction(
-                'update', 
-                $product->id, 
+                'update',
+                $product->id,
                 $product->name,
                 $oldData,
                 $product->toArray()
