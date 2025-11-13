@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
 use App\Services\AuditLogService;
+use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
@@ -20,55 +21,105 @@ class OrderController extends Controller
     {
         // --- 1. VALIDASI DATA (Order + Foto) ---
         $validator = Validator::make($request->all(), [
-            'user_id'     => 'required|exists:users,id',          // user harus ada di tabel users
-            'product_id'  => 'required|exists:products,id',       // produk harus ada di tabel products
-            'total_price' => 'required|numeric|min:0',            // harga wajib numeric
+            'user_id'     => 'required|exists:users,id',
+            'product_id'  => 'required|exists:products,id',
+            'total_price' => 'required|numeric|min:0',
+            'quantity'    => 'sometimes|integer|min:1',
+            'payment_method' => 'sometimes|string|in:bca,mandiri',
+            'photo'       => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
 
-            // Foto dikirim dari Android via Multipart (Optional)
-            // Jika ingin wajib, ubah nullable -> required
-            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            // Parameter lensa type sebagai enum
+            'lensa_type' => 'required|in:without,normal,custom',
         ]);
 
         // Jika validasi gagal → langsung balikan error
         if ($validator->fails()) {
-            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+                'message' => 'Validasi gagal'
+            ], 422);
         }
 
         $validatedData = $validator->validated();
         $order = null;
+        $photoUrl = null;
 
         // --- 2. TRANSAKSI DATABASE ---
-        // Jika ada error di tengah proses, semua batal (rollback)
         try {
             DB::beginTransaction();
 
             // Ambil data user untuk auto-fill alamat
             $user = User::findOrFail($validatedData['user_id']);
 
-            // --- 3. SIMPAN FOTO (Jika ada dikirim dari Android) ---
+            // --- 3. SIMPAN FOTO KE PUBLIC FOLDER ---
             $photoPath = null;
+
+            // DEBUG: Log file info
+            Log::info('File received:', [
+                'hasFile' => $request->hasFile('photo'),
+                'file' => $request->file('photo') ? $request->file('photo')->getClientOriginalName() : 'No file'
+            ]);
+
+            // Validasi: Jika lensa_type = custom, harus ada photo
+            if ($validatedData['lensa_type'] === 'custom' && !$request->hasFile('photo')) {
+                throw new \Exception('Untuk lensa custom, wajib upload resep dokter');
+            }
+
             if ($request->hasFile('photo')) {
-                // Simpan file ke storage/app/public/orders/xxxx.jpg
-                $photoPath = $request->file('photo')->store('public/images/doctorRecipe');
+                $file = $request->file('photo');
+
+                // Validasi tambahan untuk file
+                if (!$file->isValid()) {
+                    throw new \Exception('File tidak valid');
+                }
+
+                $originalName = $file->getClientOriginalName();
+                $fileName = time() . '_' . uniqid() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $originalName);
+
+                // Pastikan folder exists
+                $folderPath = public_path('images/doctorRecipes');
+                if (!file_exists($folderPath)) {
+                    mkdir($folderPath, 0755, true);
+                }
+
+                // Simpan ke public/images/doctorRecipes/
+                $file->move($folderPath, $fileName);
+                $photoPath = 'images/doctorRecipes/' . $fileName;
+                $photoUrl = asset('images/doctorRecipes/' . $fileName);
+
+                Log::info('File saved:', [
+                    'path' => $photoPath,
+                    'url' => $photoUrl,
+                    'full_path' => $folderPath . '/' . $fileName
+                ]);
             }
 
             // --- 4. CREATE ORDER ---
-            $order = Order::create([
+            $orderData = [
                 'user_id'     => $validatedData['user_id'],
                 'product_id'  => $validatedData['product_id'],
-                'address'     => $user->address ?? 'Alamat tidak diatur', // fallback kalau user nggak punya alamat
+                'address'     => $user->address ?? 'Alamat tidak diatur',
                 'order_date'  => now(),
                 'total_price' => $validatedData['total_price'],
                 'status'      => 'pending',
-                'photo'       => $photoPath, // SIMPAN path foto ke database
-            ]);
+                'photo'       => $photoPath,
+                'lensa_type'  => $validatedData['lensa_type'], // TAMBAH INI
+            ];
+
+            // Tambahkan payment_method jika ada
+            if (isset($validatedData['payment_method'])) {
+                $orderData['payment_method'] = $validatedData['payment_method'];
+            }
+
+            $order = Order::create($orderData);
 
             // --- 5. AMBIL & KURANGI STOK PRODUK ---
             $product = Product::findOrFail($validatedData['product_id']);
-            $quantity = $request->input('quantity', 1); // default qty = 1
+            $quantity = $request->input('quantity', 1);
 
             if ($product->stock < $quantity) {
-                throw new \Exception('Stok produk tidak mencukupi');
+                throw new \Exception('Stok produk tidak mencukupi. Stok tersedia: ' . $product->stock);
             }
 
             $product->stock -= $quantity;
@@ -78,8 +129,22 @@ class OrderController extends Controller
             AuditLogService::logOrderAction('create', $order->id, "#ORD-{$order->id}");
 
             DB::commit(); // aman → simpan database
+
+            Log::info('Order created successfully:', [
+                'order_id' => $order->id,
+                'lensa_type' => $validatedData['lensa_type'],
+                'photo_path' => $photoPath,
+                'photo_url' => $photoUrl
+            ]);
+
         } catch (\Exception $e) {
             DB::rollBack(); // error → rollback semua data
+
+            Log::error('Order creation failed:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal membuat pesanan.',
@@ -87,13 +152,24 @@ class OrderController extends Controller
             ], 500);
         }
 
-        // --- 6. BALIKKAN RESPONSE KE ANDROID ---
-        return response()->json([
+        // Reload order dengan relationships (HAPUS 'lense')
+        $order->load('user', 'product');
+
+        // --- 7. BALIKKAN RESPONSE KE ANDROID ---
+        $response = [
             'success' => true,
             'message' => 'Order berhasil dibuat',
-            'data'    => $order->load('user', 'product', 'lense'),
-            'photo_url' => $photoPath ? asset('storage/'.$photoPath) : null, // Android bisa akses langsung via URL ini
-        ], 201);
+            'order_id' => $order->id,
+            'data'    => $order,
+        ];
+
+        // Tambahkan photo_url ke data order untuk konsistensi
+        if ($photoUrl) {
+            $response['photo_url'] = $photoUrl;
+            $response['data']->photo_url = $photoUrl;
+        }
+
+        return response()->json($response, 201);
     }
 
     // GET /orders → list semua order
@@ -101,9 +177,18 @@ class OrderController extends Controller
     {
         $userId = $request->query('user_id');
 
-        $orders = Order::with('product', 'user')
+        $orders = Order::with('product', 'user') // HAPUS 'lense'
             ->when($userId, fn($q) => $q->where('user_id', $userId))
-            ->get();
+            ->get()
+            ->map(function ($order) {
+                // Tambahkan photo_url yang lengkap
+                if ($order->photo) {
+                    $order->photo_url = asset($order->photo);
+                } else {
+                    $order->photo_url = null;
+                }
+                return $order;
+            });
 
         return response()->json([
             'success' => true,
@@ -122,6 +207,11 @@ class OrderController extends Controller
                 'success' => false,
                 'message' => 'Order tidak ditemukan',
             ], 404);
+        }
+
+        // Tambahkan photo_url
+        if ($order->photo) {
+            $order->photo_url = asset($order->photo);
         }
 
         return response()->json([
@@ -163,14 +253,14 @@ class OrderController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Status order berhasil diperbarui',
-            'data'    => $order->load('user', 'product'),
+            'data'    => $order->load('user', 'product'), // HAPUS 'lense'
         ], 200);
     }
 
     // GET /orders/recent → order terbaru (dashboard)
     public function recent()
     {
-        $orders = Order::with('user', 'product')
+        $orders = Order::with('user', 'product') // HAPUS 'lense'
             ->latest()
             ->take(5)
             ->get();

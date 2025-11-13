@@ -19,6 +19,7 @@ return new class extends Migration
             $table->dateTime('order_date');
             $table->decimal('total_price', 12, 2);
             $table->enum('status', ['pending', 'processing', 'sending', 'completed', 'cancelled'])->default('pending');
+            $table->enum('lensa_type', ['without', 'normal', 'custom'])->default('normal');
             $table->string('photo')->nullable();
             $table->enum('payment_method', [
                 'bca', 'mandiri',

@@ -66,6 +66,7 @@ class DatabaseSeeder extends Seeder
             'total_price' => 200000,
             'status' => 'completed',
             'payment_method' => 'bca',
+            'lensa_type' => 'normal',
         ]);
 
         Order::create([
@@ -76,6 +77,7 @@ class DatabaseSeeder extends Seeder
             'total_price' => 250000,
             'status' => 'processing',
             'payment_method' => 'bca',
+            'lensa_type' => 'normal',
         ]);
 
         Order::create([
@@ -86,6 +88,7 @@ class DatabaseSeeder extends Seeder
             'total_price' => 400000,
             'status' => 'processing',
             'payment_method' => 'mandiri',
+            'lensa_type' => 'without',
         ]);
 
         Order::create([
@@ -96,6 +99,8 @@ class DatabaseSeeder extends Seeder
             'total_price' => 300000,
             'status' => 'pending',
             'payment_method' => 'bca',
+            'lensa_type' => 'custom',
+            'photo' => 'images/doctorRecipes/sample.jpg', // jika ada foto
         ]);
 
         Order::create([
@@ -106,6 +111,7 @@ class DatabaseSeeder extends Seeder
             'total_price' => 350000,
             'status' => 'pending',
             'payment_method' => 'mandiri',
+            'lensa_type' => 'normal',
         ]);
     }
 }

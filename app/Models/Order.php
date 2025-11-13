@@ -7,7 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class Order extends Model
 {
     protected $fillable = [
-        'user_id', 'product_id', 'address', 'order_date', 'total_price', 'status', 'photo', 'payment_method'
+        'user_id', 'product_id', 'address',
+        'order_date', 'total_price', 'status',
+        'photo', 'payment_method', 'lensa_type'
     ];
 
     public function user()
@@ -18,10 +20,5 @@ class Order extends Model
     public function product()
     {
         return $this->belongsTo(Product::class);
-    }
-
-    public function lense()
-    {
-        return $this->hasOne(Lense::class);
     }
 }
