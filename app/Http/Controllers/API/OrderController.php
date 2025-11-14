@@ -487,17 +487,13 @@ class OrderController extends Controller
             ], 404);
         }
 
-        $orders = Order::with('product', 'user')
+        $orders = Order::with(['product' => function($query) {
+                $query->select('id', 'name', 'image_url', 'description', 'price', 'stock', 'type');
+            }, 'user'])
             ->where('user_id', $userId)
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($order) {
-                // Tambahkan photo_url yang lengkap
-                if ($order->photo) {
-                    $order->photo_url = asset($order->photo);
-                } else {
-                    $order->photo_url = null;
-                }
                 return $order;
             });
 
