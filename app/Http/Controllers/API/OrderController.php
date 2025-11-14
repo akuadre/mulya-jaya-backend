@@ -472,4 +472,44 @@ class OrderController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * GET /orders/user/{userId} → get orders by user ID
+     */
+    public function getByUserId($userId)
+    {
+        // Validasi apakah user exists
+        $user = User::find($userId);
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User tidak ditemukan',
+            ], 404);
+        }
+
+        $orders = Order::with('product', 'user')
+            ->where('user_id', $userId)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($order) {
+                // Tambahkan photo_url yang lengkap
+                if ($order->photo) {
+                    $order->photo_url = asset($order->photo);
+                } else {
+                    $order->photo_url = null;
+                }
+                return $order;
+            });
+
+        return response()->json([
+            'success' => true,
+            'message' => $orders->isEmpty() ? 'Belum ada pesanan untuk user ini' : 'Daftar pesanan user berhasil diambil',
+            'data'    => $orders,
+            'user'    => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email
+            ]
+        ], 200);
+    }
 }
