@@ -30,6 +30,7 @@ Route::put('/profile/{id}', [AuthController::class, 'updateProfile']);
 // User Products
 // ---------------------------
 Route::get('/products', [ProductController::class, 'index']);
+Route::get('/products/admin', [ProductController::class, 'indexAdmin']);
 Route::get('/products/{id}', [ProductController::class, 'show']);
 
 // ---------------------------

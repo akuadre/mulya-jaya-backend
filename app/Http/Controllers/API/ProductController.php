@@ -41,6 +41,38 @@ class ProductController extends Controller
         ], 200);
     }
 
+    // GET /products for Admin
+    public function indexAdmin()
+    {
+        $products = Product::where('stock', '>=', 0)->get();
+
+        if ($products->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ada produk tersedia',
+            ], 404);
+        }
+
+        // mapping data biar 'type' jadi ucfirst
+        $data = $products->map(function ($product) {
+            return [
+                'id' => $product->id,
+                'name' => $product->name,
+                'type' => ucfirst($product->type),
+                'price' => $product->price,
+                'stock' => $product->stock,
+                'description' => $product->description,
+                'image_url' => $product->image_url,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Daftar produk berhasil diambil',
+            'data' => $data,
+        ], 200);
+    }
+
     // GET /products/{id}
     public function show($id)
     {
