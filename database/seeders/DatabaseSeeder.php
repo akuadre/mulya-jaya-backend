@@ -58,60 +58,60 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // Order seeder
-        Order::create([
-            'user_id' => 1,
-            'product_id' => 1,
-            'address' => 'Jl. Maleber Barat',
-            'order_date' => Carbon::now(),
-            'total_price' => 200000,
-            'status' => 'completed',
-            'payment_method' => 'bca',
-            'lensa_type' => 'normal',
-        ]);
+        // Order::create([
+        //     'user_id' => 1,
+        //     'product_id' => 1,
+        //     'address' => 'Jl. Maleber Barat',
+        //     'order_date' => Carbon::now(),
+        //     'total_price' => 200000,
+        //     'status' => 'completed',
+        //     'payment_method' => 'bca',
+        //     'lensa_type' => 'normal',
+        // ]);
 
-        Order::create([
-            'user_id' => 1,
-            'product_id' => 2,
-            'address' => 'Jl. Maleber Barat',
-            'order_date' => Carbon::now(),
-            'total_price' => 250000,
-            'status' => 'processing',
-            'payment_method' => 'bca',
-            'lensa_type' => 'normal',
-        ]);
+        // Order::create([
+        //     'user_id' => 1,
+        //     'product_id' => 2,
+        //     'address' => 'Jl. Maleber Barat',
+        //     'order_date' => Carbon::now(),
+        //     'total_price' => 250000,
+        //     'status' => 'processing',
+        //     'payment_method' => 'bca',
+        //     'lensa_type' => 'normal',
+        // ]);
 
-        Order::create([
-            'user_id' => 1,
-            'product_id' => 3,
-            'address' => 'Jl. Maleber Barat',
-            'order_date' => Carbon::now(),
-            'total_price' => 400000,
-            'status' => 'processing',
-            'payment_method' => 'mandiri',
-            'lensa_type' => 'without',
-        ]);
+        // Order::create([
+        //     'user_id' => 1,
+        //     'product_id' => 3,
+        //     'address' => 'Jl. Maleber Barat',
+        //     'order_date' => Carbon::now(),
+        //     'total_price' => 400000,
+        //     'status' => 'processing',
+        //     'payment_method' => 'mandiri',
+        //     'lensa_type' => 'without',
+        // ]);
 
-        Order::create([
-            'user_id' => 1,
-            'product_id' => 4,
-            'address' => 'Jl. Maleber Barat',
-            'order_date' => Carbon::now(),
-            'total_price' => 300000,
-            'status' => 'pending',
-            'payment_method' => 'bca',
-            'lensa_type' => 'custom',
-            'photo' => 'images/doctorRecipes/sample.jpg', // jika ada foto
-        ]);
+        // Order::create([
+        //     'user_id' => 1,
+        //     'product_id' => 4,
+        //     'address' => 'Jl. Maleber Barat',
+        //     'order_date' => Carbon::now(),
+        //     'total_price' => 300000,
+        //     'status' => 'pending',
+        //     'payment_method' => 'bca',
+        //     'lensa_type' => 'custom',
+        //     'photo' => 'images/doctorRecipes/sample.jpg', // jika ada foto
+        // ]);
 
-        Order::create([
-            'user_id' => 1,
-            'product_id' => 5,
-            'address' => 'Jl. Maleber Barat',
-            'order_date' => Carbon::now(),
-            'total_price' => 350000,
-            'status' => 'pending',
-            'payment_method' => 'mandiri',
-            'lensa_type' => 'normal',
-        ]);
+        // Order::create([
+        //     'user_id' => 1,
+        //     'product_id' => 5,
+        //     'address' => 'Jl. Maleber Barat',
+        //     'order_date' => Carbon::now(),
+        //     'total_price' => 350000,
+        //     'status' => 'pending',
+        //     'payment_method' => 'mandiri',
+        //     'lensa_type' => 'normal',
+        // ]);
     }
 }
