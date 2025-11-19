@@ -15,7 +15,7 @@ class ProductSeeder extends Seeder
         $products = [
             [
                 'name' => 'Cartier',
-                'type' => 'unisex',
+                'type' => 'pria',
                 'price' => 200000,
                 'stock' => 1,
                 'description' => 'Kacamata Cartier – elegan dan mewah, cocok untuk gaya modern.',
@@ -31,7 +31,7 @@ class ProductSeeder extends Seeder
             ],
             [
                 'name' => 'Chanel',
-                'type' => 'unisex',
+                'type' => 'wanita',
                 'price' => 300000,
                 'stock' => 1,
                 'description' => 'Kacamata Chanel – premium dan stylish dengan sentuhan elegan.',
@@ -39,7 +39,7 @@ class ProductSeeder extends Seeder
             ],
             [
                 'name' => 'Dior',
-                'type' => 'unisex',
+                'type' => 'wanita',
                 'price' => 300000,
                 'stock' => 1,
                 'description' => 'Kacamata Dior – modern, fashionable, dan nyaman digunakan.',
@@ -47,7 +47,7 @@ class ProductSeeder extends Seeder
             ],
             [
                 'name' => 'Esprit',
-                'type' => 'unisex',
+                'type' => 'pria',
                 'price' => 600000,
                 'stock' => 1,
                 'description' => 'Kacamata Esprit – ringan, trendy, dan cocok untuk anak muda.',
@@ -71,7 +71,7 @@ class ProductSeeder extends Seeder
             ],
             [
                 'name' => 'FreeHouse',
-                'type' => 'unisex',
+                'type' => 'pria',
                 'price' => 200000,
                 'stock' => 1,
                 'description' => 'Kacamata FreeHouse – simple, ringan, dan cocok dipakai sehari-hari.',
@@ -79,7 +79,7 @@ class ProductSeeder extends Seeder
             ],
             [
                 'name' => 'Glory',
-                'type' => 'unisex',
+                'type' => 'pria',
                 'price' => 300000,
                 'stock' => 1,
                 'description' => 'Kacamata Glory – desain kekinian untuk gaya anak muda.',
@@ -87,7 +87,7 @@ class ProductSeeder extends Seeder
             ],
             [
                 'name' => 'Goobgn',
-                'type' => 'unisex',
+                'type' => 'wanita',
                 'price' => 200000,
                 'stock' => 1,
                 'description' => 'Kacamata Goobgn – trendy dan ringan, nyaman dipakai lama.',
@@ -95,7 +95,7 @@ class ProductSeeder extends Seeder
             ],
             [
                 'name' => 'Gucci',
-                'type' => 'unisex',
+                'type' => 'pria',
                 'price' => 300000,
                 'stock' => 1,
                 'description' => 'Kacamata Gucci – high class fashion eyewear.',
@@ -103,7 +103,7 @@ class ProductSeeder extends Seeder
             ],
             [
                 'name' => 'Marc Jacobs',
-                'type' => 'unisex',
+                'type' => 'pria',
                 'price' => 200000,
                 'stock' => 1,
                 'description' => 'Kacamata Jacobs – simple tapi tetap stylish.',
@@ -119,7 +119,7 @@ class ProductSeeder extends Seeder
             ],
             [
                 'name' => 'Looneytoons',
-                'type' => 'unisex',
+                'type' => 'wanita',
                 'price' => 300000,
                 'stock' => 1,
                 'description' => 'Kacamata Looneytoons – playful dan cocok untuk anak muda.',
@@ -127,7 +127,7 @@ class ProductSeeder extends Seeder
             ],
             [
                 'name' => 'MJ Series 01',
-                'type' => 'unisex',
+                'type' => 'wanita',
                 'price' => 210000,
                 'stock' => 1,
                 'description' => 'Kacamata MJ Series 01 – desain unik dengan gaya modern.',
@@ -143,7 +143,7 @@ class ProductSeeder extends Seeder
             ],
             [
                 'name' => 'Police',
-                'type' => 'unisex',
+                'type' => 'pria',
                 'price' => 300000,
                 'stock' => 1,
                 'description' => 'Kacamata Police – keren dan maskulin dengan kualitas tinggi.',
@@ -167,7 +167,7 @@ class ProductSeeder extends Seeder
             ],
             [
                 'name' => 'WhiteLotus',
-                'type' => 'unisex',
+                'type' => 'wanita',
                 'price' => 250000,
                 'stock' => 1,
                 'description' => 'Kacamata WhiteLotus – stylish dan elegan.',
